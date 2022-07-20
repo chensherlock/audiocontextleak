@@ -19,7 +19,7 @@
 </div>
 
 <button class="buffer">
-  reCreateBuffer
+Run
 </button>
 <script>
 var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
@@ -39,7 +39,8 @@ var rendering = false;
 
 function getData() {
   request = new XMLHttpRequest();
-  request.open('GET', 'https://raw.githubusercontent.com/IvanDem/sound_test/master/audio/music.ogg', true);
+  //request.open('GET', 'https://raw.githubusercontent.com/IvanDem/sound_test/master/audio/music.ogg', true);
+  request.open('GET', 'https://raw.githubusercontent.com/chensherlock/audiocontextleak/master/music.mp3', true);
   request.responseType = 'arraybuffer';
   request.onload = function() {
     progress.innerText = 'loaded';
@@ -71,7 +72,7 @@ function createBuffer() {
     buffer.removeAttribute('disabled');
     source.disconnect(offlineCtx.destination);
     cntRenfered++;
-    buffer.innerText = 'reCreateBuffer ' + cntRenfered;
+    buffer.innerText = 'Round ' + cntRenfered;
     setTimeout(function() {
       IFrameReload();
     });
@@ -118,6 +119,7 @@ function IFrameReload() {
 }
 
 createIframe();
+IFrameReload();
 
 </script>    
   </body>
