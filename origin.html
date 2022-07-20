@@ -85,7 +85,9 @@ function createBuffer() {
   offlineCtx.startRendering().then(function(renderedBuffer) {
     result.innerHTML = 'Duration=' + renderedBuffer.duration + 's<BR>Length=' + (renderedBuffer.length / 1024 / 1024).toFixed(3) + 'MB';
     //progress.innerText = 'completed';
-	progress.innerHTML = 'usedJSHeapSize=' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(3)+ 'MB';
+	if (performance.memory) {
+		progress.innerHTML = 'usedJSHeapSize=' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(3)+ 'MB';
+	}
     buffer.removeAttribute('disabled');
     source.disconnect(offlineCtx.destination);
     cntRenfered++;
