@@ -40,7 +40,8 @@ var rendering = false;
 function getData() {
   request = new XMLHttpRequest();
 
-  request.open('GET', 'https://raw.githubusercontent.com/IvanDem/sound_test/master/audio/music.ogg', true);
+  //request.open('GET', 'https://raw.githubusercontent.com/IvanDem/sound_test/master/audio/music.ogg', true);
+  request.open('GET', 'https://raw.githubusercontent.com/chensherlock/audiocontextleak/master/music.mp3', true);
 
   request.responseType = 'arraybuffer';
 
