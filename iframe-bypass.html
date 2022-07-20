@@ -5,16 +5,15 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta http-equiv="edit-Type" edit="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>OfflineAudioContext leaks - ORIGIN</title>
-	<style>
+    <title>OfflineAudioContext leaks - IFRAME with bypass processor</title>
+    <style>
 .buffer {
 	font-size: 20px;
 }
-
-	</style>
+    </style>
   </head>
   <body id="sylvester-standalone">
-<H3>OfflineAudioContext leaks - ORIGIN</H3>    
+<H3>OfflineAudioContext leaks - IFRAME with bypass processor</H3>
 <div id="progress">
   loading
 </div>
@@ -42,17 +41,17 @@ var rendering = false;
 
 function getData() {
   request = new XMLHttpRequest();
-
   request.open('GET', 'https://raw.githubusercontent.com/chensherlock/audiocontextleak/master/music.mp3', true);
-
   request.responseType = 'arraybuffer';
   request.onload = function() {
     progress.innerText = 'loaded';
     var audioData = request.response;
-    audioCtx.decodeAudioData(audioData, function(buffer) {
-      myBuffer = buffer;
-     
-      createBuffer();
+    audioCtx.decodeAudioData(audioData, function(b) {
+      myBuffer = b;
+      buffer.removeAttribute('disabled');
+	  
+	  IFrameReload();
+	  
     }).catch(function(err) {
       console.log('Rendering failed: ' + err);
       // Note: The promise should reject when startRendering is called a second time on an OfflineAudioContext
@@ -65,24 +64,16 @@ progress.innerText = 'loading...';
 var cntRenfered = 0;
 
 function createBuffer() {
-  var offlineCtx = new OfflineAudioContext(2, myBuffer.length, myBuffer.sampleRate);
-  var source = offlineCtx.createBufferSource();
-  source.buffer = myBuffer;
-  source.connect(offlineCtx.destination);
-  source.start();
-  //source.loop = true;
-  /*
-  offlineCtx.oncomplete = function(e) {
-    console.log('Rendering completed successfully');
-    //progress.innerText = 'completed';
-	progress.innerText = 'completed. length=' + (offlineCtx.length / 1024 / 1024).toFixed(3) + ' ' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(3);
-    buffer.removeAttribute('disabled');
-    source.disconnect(offlineCtx.destination);
-    cntRenfered++;
-    buffer.innerText = 'Round ' + cntRenfered;
-	setTimeout(createBuffer, 500);
-  }
-  */
+  var offlineCtx = getIFrameOfflineContext(2, myBuffer.length, myBuffer.sampleRate);
+  
+  offlineCtx.audioWorklet.addModule('bypass.js').then(() => {
+	var source = offlineCtx.createBufferSource();
+	var bypasser = new AudioWorkletNode(offlineCtx, 'bypass-processor');
+
+    source.buffer = myBuffer;
+    source.connect(bypasser).connect(offlineCtx.destination);
+    source.start();
+  
   offlineCtx.startRendering().then(function(renderedBuffer) {
     result.innerHTML = 'Duration=' + renderedBuffer.duration + 's<BR>Length=' + (renderedBuffer.length / 1024 / 1024).toFixed(3) + 'MB';
     //progress.innerText = 'completed';
@@ -90,15 +81,20 @@ function createBuffer() {
 		progress.innerHTML = 'usedJSHeapSize=' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(3)+ 'MB';
 	}
     buffer.removeAttribute('disabled');
-    source.disconnect(offlineCtx.destination);
+    source.disconnect(); //(offlineCtx.destination);
+	bypasser.disconnect();
     cntRenfered++;
     buffer.innerText = 'Round ' + cntRenfered;
-	setTimeout(createBuffer, 500);
+    setTimeout(function() {
+      IFrameReload();
+    });	
   }).catch(function(err) {
 	document.body.style.backgroundColor = "#f7b2b0";
     result.innerText = 'Rendering failed: ' + err;
-  });
+  });  
   
+  });
+
 }
 
 buffer.onclick = function() {
@@ -108,6 +104,38 @@ buffer.onclick = function() {
 }
 
 getData();
+var iFrame;
+
+function createIframe() {
+  iFrame = document.createElement('iframe');
+  iFrame.style.display = 'none';
+  iFrame.onload = () => {
+    const script = document.createElement('script');
+    script.innerHTML =
+      `
+        function reload() {
+          location.reload();
+        }
+
+        function createOfflineContext(NUMBER_OF_CHANNEL, duration, sampleRate) {
+          return new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(NUMBER_OF_CHANNEL,duration,sampleRate);
+        }
+      `;
+    iFrame.contentDocument.body.appendChild(script);
+  };
+  document.body.appendChild(iFrame);
+}
+
+function getIFrameOfflineContext(NUMBER_OF_CHANNEL, duration, sampleRate) {
+  return iFrame.contentWindow.createOfflineContext(NUMBER_OF_CHANNEL, duration, sampleRate);
+}
+
+function IFrameReload() {
+  iFrame.contentWindow.reload();
+  setTimeout(createBuffer, 500);
+}
+
+createIframe();
 
 </script>    
   </body>

@@ -5,7 +5,7 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta http-equiv="edit-Type" edit="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>OfflineAudioContext leaks - ORIGIN</title>
+    <title>OfflineAudioContext leaks - ORIGIN with bypass processor</title>
 	<style>
 .buffer {
 	font-size: 20px;
@@ -14,7 +14,7 @@
 	</style>
   </head>
   <body id="sylvester-standalone">
-<H3>OfflineAudioContext leaks - ORIGIN</H3>    
+<H3>OfflineAudioContext leaks - ORIGIN with bypass processor</H3>  
 <div id="progress">
   loading
 </div>
@@ -66,39 +66,41 @@ var cntRenfered = 0;
 
 function createBuffer() {
   var offlineCtx = new OfflineAudioContext(2, myBuffer.length, myBuffer.sampleRate);
-  var source = offlineCtx.createBufferSource();
-  source.buffer = myBuffer;
-  source.connect(offlineCtx.destination);
-  source.start();
-  //source.loop = true;
-  /*
-  offlineCtx.oncomplete = function(e) {
-    console.log('Rendering completed successfully');
-    //progress.innerText = 'completed';
-	progress.innerText = 'completed. length=' + (offlineCtx.length / 1024 / 1024).toFixed(3) + ' ' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(3);
-    buffer.removeAttribute('disabled');
-    source.disconnect(offlineCtx.destination);
-    cntRenfered++;
-    buffer.innerText = 'Round ' + cntRenfered;
-	setTimeout(createBuffer, 500);
-  }
-  */
-  offlineCtx.startRendering().then(function(renderedBuffer) {
-    result.innerHTML = 'Duration=' + renderedBuffer.duration + 's<BR>Length=' + (renderedBuffer.length / 1024 / 1024).toFixed(3) + 'MB';
-    //progress.innerText = 'completed';
-	if (performance.memory) {
-		progress.innerHTML = 'usedJSHeapSize=' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(3)+ 'MB';
-	}
-    buffer.removeAttribute('disabled');
-    source.disconnect(offlineCtx.destination);
-    cntRenfered++;
-    buffer.innerText = 'Round ' + cntRenfered;
-	setTimeout(createBuffer, 500);
-  }).catch(function(err) {
-	document.body.style.backgroundColor = "#f7b2b0";
-    result.innerText = 'Rendering failed: ' + err;
-  });
+ 
+  offlineCtx.audioWorklet.addModule('bypass.js').then(() => {
+	  var source = offlineCtx.createBufferSource();
   
+	  var bypasser = new AudioWorkletNode(offlineCtx, 'bypass-processor');
+
+	  source.buffer = myBuffer;
+	  source.connect(bypasser).connect(offlineCtx.destination);
+	  //source.connect(offlineCtx.destination);
+	  //source.start();
+	  offlineCtx.startRendering().then(function(renderedBuffer) {
+		result.innerHTML = 'Duration=' + renderedBuffer.duration + 's<BR>Length=' + (renderedBuffer.length / 1024 / 1024).toFixed(3) + 'MB';
+		if (performance.memory) {
+			progress.innerHTML = 'usedJSHeapSize=' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(3)+ 'MB';
+		}
+		buffer.removeAttribute('disabled');
+		source.disconnect();
+		//source.disconnect(bypasser);
+		bypasser.disconnect();
+		//bypasser.disconnect(offlineCtx.destination);
+		bypasser = null;
+		cntRenfered++;
+		buffer.innerText = 'Round ' + cntRenfered;
+		offlineCtx = null;
+		setTimeout(createBuffer, 500);
+	  }).catch(function(err) {
+		document.body.style.backgroundColor = "#f7b2b0";
+		result.innerText = 'Rendering failed: ' + err;
+	  });
+	
+	
+  });
+
+
+ 
 }
 
 buffer.onclick = function() {
