@@ -1,0 +1,124 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="edit-Type" edit="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AudioContext Memory leaks - IFrame</title>
+	<style>
+.error {
+  color: red;
+  font-style: italic;
+}
+	</style>
+  </head>
+  <body id="sylvester-standalone">
+<div id="progress">
+  loading
+</div>
+
+<button class="buffer">
+  reCreateBuffer
+</button>
+<script>
+var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+
+// define variables
+
+var play = document.querySelector('.play');
+var stop = document.querySelector('.stop');
+var progress = document.querySelector('#progress');
+var buffer = document.querySelector('.buffer');
+var myBuffer = null;
+
+var rendering = false;
+// use XHR to load an audio track, and
+// decodeAudioData to decode it and stick it in a buffer.
+// Then we put the buffer into the source
+
+function getData() {
+  request = new XMLHttpRequest();
+  request.open('GET', 'https://raw.githubusercontent.com/IvanDem/sound_test/master/audio/music.ogg', true);
+  request.responseType = 'arraybuffer';
+  request.onload = function() {
+    progress.innerText = 'loaded';
+    var audioData = request.response;
+    audioCtx.decodeAudioData(audioData, function(b) {
+      myBuffer = b;
+      buffer.removeAttribute('disabled');
+    }).catch(function(err) {
+      console.log('Rendering failed: ' + err);
+      // Note: The promise should reject when startRendering is called a second time on an OfflineAudioContext
+    });
+  }
+  request.send();
+}
+buffer.setAttribute('disabled', 'disabled');
+progress.innerText = 'loading...';
+var cntRenfered = 0;
+
+function createBuffer() {
+  var offlineCtx = getIFrameOfflineContext(2, myBuffer.length, myBuffer.sampleRate);
+  var source = offlineCtx.createBufferSource();
+  source.buffer = myBuffer;
+  source.connect(offlineCtx.destination);
+  source.start();
+  //source.loop = true;
+  offlineCtx.oncomplete = function(e) {
+    console.log('Rendering completed successfully');
+    progress.innerText = 'completed. length=' + (offlineCtx.length / 1024 / 1024).toFixed(3) + ' ' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(3);
+    buffer.removeAttribute('disabled');
+    source.disconnect(offlineCtx.destination);
+    cntRenfered++;
+    buffer.innerText = 'reCreateBuffer ' + cntRenfered;
+    setTimeout(function() {
+      IFrameReload();
+    });
+  }
+  offlineCtx.startRendering();
+}
+
+buffer.onclick = function() {
+  progress.innerText = 'rendering...';
+  buffer.setAttribute('disabled', 'disabled');
+  createBuffer();
+}
+
+getData();
+var iFrame;
+
+function createIframe() {
+  iFrame = document.createElement('iframe');
+  iFrame.style.display = 'none';
+  iFrame.onload = () => {
+    const script = document.createElement('script');
+    script.innerHTML =
+      `
+        function reload() {
+          location.reload();
+        }
+
+        function createOfflineContext(NUMBER_OF_CHANNEL, duration, sampleRate) {
+          return new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(NUMBER_OF_CHANNEL,duration,sampleRate);
+        }
+      `;
+    iFrame.contentDocument.body.appendChild(script);
+  };
+  document.body.appendChild(iFrame);
+}
+
+function getIFrameOfflineContext(NUMBER_OF_CHANNEL, duration, sampleRate) {
+  return iFrame.contentWindow.createOfflineContext(NUMBER_OF_CHANNEL, duration, sampleRate);
+}
+
+function IFrameReload() {
+  iFrame.contentWindow.reload();
+  setTimeout(createBuffer, 500);
+}
+
+createIframe();
+
+</script>    
+  </body>
+</html>
