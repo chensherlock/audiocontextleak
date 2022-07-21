@@ -1,18 +1,17 @@
 /**
- * A simple bypass node demo.
+ * bypass node
  *
  * @class BypassProcessor
  * @extends AudioWorkletProcessor
  */
 class BypassProcessor extends AudioWorkletProcessor {
-
     // When constructor() undefined, the default constructor will be
     // implicitly used.
-
     process(inputs, outputs) {
         // By default, the node has single input and output.
         const input = inputs[0];
         const output = outputs[0];
+        //console.log("bypasser");
         if (input.length > 0) {
             // console.log("inside process");
             for (let channel = 0; channel < output.length; ++channel) {
@@ -21,7 +20,6 @@ class BypassProcessor extends AudioWorkletProcessor {
         } else {
             // console.log("skip process");
         }
-
         return true;
     }
 }

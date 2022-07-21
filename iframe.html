@@ -1,21 +1,20 @@
 <!DOCTYPE HTML>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta http-equiv="edit-Type" edit="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>OfflineAudioContext leaks - IFRAME</title>
-    <style>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="edit-Type" edit="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OfflineAudioContext leaks - IFRAME</title>
+<style>
 .buffer {
 	font-size: 20px;
 }
-    </style>
-  </head>
-  <body id="sylvester-standalone">
-<H3>OfflineAudioContext leaks - IFRAME</H3>      
+</style>
+</head>
+<body id="sylvester-standalone">
+<h3>OfflineAudioContext leaks - IFRAME</h3>
 <div id="progress">
-  loading
+loading
 </div>
 <div id="result">
 </div>
@@ -49,12 +48,9 @@ function getData() {
     audioCtx.decodeAudioData(audioData, function(b) {
       myBuffer = b;
       buffer.removeAttribute('disabled');
-	  
 	  IFrameReload();
-	  
     }).catch(function(err) {
       console.log('Rendering failed: ' + err);
-      // Note: The promise should reject when startRendering is called a second time on an OfflineAudioContext
     });
   }
   request.send();
@@ -64,86 +60,69 @@ progress.innerText = 'loading...';
 var cntRenfered = 0;
 
 function createBuffer() {
-  var offlineCtx = getIFrameOfflineContext(2, myBuffer.length, myBuffer.sampleRate);
-  var source = offlineCtx.createBufferSource();
-  source.buffer = myBuffer;
-  source.connect(offlineCtx.destination);
-  source.start();
-  //source.loop = true;
-  /*
-  offlineCtx.oncomplete = function(e) {
-    console.log('Rendering completed successfully');
-    progress.innerText = 'completed. length=' + (offlineCtx.length / 1024 / 1024).toFixed(3) + ' ' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(3);
-    buffer.removeAttribute('disabled');
-    source.disconnect(offlineCtx.destination);
-    cntRenfered++;
-    buffer.innerText = 'Round ' + cntRenfered;
-    setTimeout(function() {
-      IFrameReload();
-    });
-  }
-  offlineCtx.startRendering();
-  */
-  
-  offlineCtx.startRendering().then(function(renderedBuffer) {
-    result.innerHTML = 'Duration=' + renderedBuffer.duration + 's<BR>Length=' + (renderedBuffer.length / 1024 / 1024).toFixed(3) + 'MB';
-    //progress.innerText = 'completed';
-	if (performance.memory) {
-		progress.innerHTML = 'usedJSHeapSize=' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(3)+ 'MB';
-	}
-    buffer.removeAttribute('disabled');
-    source.disconnect(offlineCtx.destination);
-    cntRenfered++;
-    buffer.innerText = 'Round ' + cntRenfered;
-    setTimeout(function() {
-      IFrameReload();
-    });	
-  }).catch(function(err) {
-	document.body.style.backgroundColor = "#f7b2b0";
-    result.innerText = 'Rendering failed: ' + err;
-  });  
+    var offlineCtx = getIFrameOfflineContext(2, myBuffer.length, myBuffer.sampleRate);
+    var source = offlineCtx.createBufferSource();
+    source.buffer = myBuffer;
+    source.connect(offlineCtx.destination);
+    source.start();
+    offlineCtx.startRendering().then(function(renderedBuffer) {
+        result.innerHTML = 'Duration=' + renderedBuffer.duration + 's<BR>Length=' + (renderedBuffer.length / 1024 / 1024).toFixed(3) + 'MB';
+        if (performance.memory) {
+            progress.innerHTML = 'usedJSHeapSize=' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(3)+ 'MB';
+        }
+        buffer.removeAttribute('disabled');
+        source.disconnect(offlineCtx.destination);
+        cntRenfered++;
+        buffer.innerText = 'Round ' + cntRenfered;
+        setTimeout(function() {
+            IFrameReload();
+        });	
+    }).catch(function(err) {
+    document.body.style.backgroundColor = "#f7b2b0";
+        result.innerText = 'Rendering failed: ' + err;
+    });  
 }
 
 buffer.onclick = function() {
-  progress.innerText = 'rendering...';
-  buffer.setAttribute('disabled', 'disabled');
-  createBuffer();
+    progress.innerText = 'rendering...';
+    buffer.setAttribute('disabled', 'disabled');
+    createBuffer();
 }
 
 getData();
 var iFrame;
 
 function createIframe() {
-  iFrame = document.createElement('iframe');
-  iFrame.style.display = 'none';
-  iFrame.onload = () => {
-    const script = document.createElement('script');
-    script.innerHTML =
-      `
-        function reload() {
-          location.reload();
-        }
+    iFrame = document.createElement('iframe');
+    iFrame.style.display = 'none';
+    iFrame.onload = () => {
+        const script = document.createElement('script');
+        script.innerHTML =
+          `
+            function reload() {
+              location.reload();
+            }
 
-        function createOfflineContext(NUMBER_OF_CHANNEL, duration, sampleRate) {
-          return new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(NUMBER_OF_CHANNEL,duration,sampleRate);
-        }
-      `;
-    iFrame.contentDocument.body.appendChild(script);
-  };
-  document.body.appendChild(iFrame);
+            function createOfflineContext(NUMBER_OF_CHANNEL, duration, sampleRate) {
+              return new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(NUMBER_OF_CHANNEL,duration,sampleRate);
+            }
+          `;
+        iFrame.contentDocument.body.appendChild(script);
+    };
+    document.body.appendChild(iFrame);
 }
 
 function getIFrameOfflineContext(NUMBER_OF_CHANNEL, duration, sampleRate) {
-  return iFrame.contentWindow.createOfflineContext(NUMBER_OF_CHANNEL, duration, sampleRate);
+    return iFrame.contentWindow.createOfflineContext(NUMBER_OF_CHANNEL, duration, sampleRate);
 }
-
 function IFrameReload() {
-  iFrame.contentWindow.reload();
-  setTimeout(createBuffer, 500);
+
+    iFrame.contentWindow.reload();
+    setTimeout(createBuffer, 500);
 }
 
 createIframe();
 
-</script>    
-  </body>
+</script>
+</body>
 </html>
