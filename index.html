@@ -122,9 +122,9 @@ function createBuffer() {
             source.connect(bypasser).connect(offlineCtx.destination);
             source.start();
             offlineCtx.startRendering().then(function(renderedBuffer) {
-                result.innerHTML = 'Duration=' + renderedBuffer.duration + 's<BR>Length=' + (renderedBuffer.length / 1024 / 1024).toFixed(3) + 'MB';
+                result.innerHTML = 'Duration=' + renderedBuffer.duration.toFixed(1) + 's<BR>Length=' + (renderedBuffer.length / 1024 / 1024).toFixed(1) + 'MB';
                 if (performance.memory) {
-                    progress.innerHTML = 'usedJSHeapSize=' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(3)+ 'MB';
+                    progress.innerHTML = 'usedJSHeapSize=' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1)+ 'MB';
                 }
                 source.disconnect();
                 bypasser.disconnect();
@@ -142,9 +142,9 @@ function createBuffer() {
         source.connect(offlineCtx.destination);
         source.start();
         offlineCtx.startRendering().then(function(renderedBuffer) {
-            result.innerHTML = 'Duration=' + renderedBuffer.duration + 's<BR>Length=' + (renderedBuffer.length / 1024 / 1024).toFixed(3) + 'MB';
+            result.innerHTML = 'Duration=' + renderedBuffer.duration.toFixed(1) + 's<BR>Length=' + (renderedBuffer.length / 1024 / 1024).toFixed(1) + 'MB';
             if (performance.memory) {
-                progress.innerHTML = 'usedJSHeapSize=' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(3)+ 'MB';
+                progress.innerHTML = 'usedJSHeapSize=' + (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1)+ 'MB';
             }
             source.disconnect();
             count++;
