@@ -5,10 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OfflineAudioContext leaks</title>
 <style>
+body {
+    font-family: monospace;
+    font-size: 20px;
+}
+hr {
+    display: block; height: 1px;
+    border: 0; border-top: 2px dotted #ccc;
+    margin: 1em 0; padding: 0;
+}
 #subject {
     font-size: 20px;
 }
-.btn {font-size: 20px} 
+.btn {
+    font-size: 20px;
+    border-radius: 5px;
+    min-width: 360px;
+} 
 
 #mainBtn {background-color: #f44336;}
 #iframeBtn {background-color: #d5de31;}
@@ -26,10 +39,10 @@
 <body>
 <h3>OfflineAudioContext Leaks</h3>
 <div id="agent"></div>
-&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;
+<hr>
 <div id="progress">loading</div>
 <div id="result"></div>
-&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;&#8230;
+<hr>
 <div id="subject"></div>
 <div id="rounds"></div>
 <button class="btn" id="mainBtn" style="visibility:hidden">MainFrame</button><br>
